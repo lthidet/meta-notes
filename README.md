@@ -68,7 +68,7 @@ Assets/
 
 **Option 1: Download prebuilt binaries**
 
-* Go to the [Releases](#) page and download for your OS.
+* Go to the [Releases](https://github.com/lthidet/meta-notes/releases/) page and download for your OS.
 * Unzip and run the app.
 
 **Option 2: Build from source**
