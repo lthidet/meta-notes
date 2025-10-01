@@ -318,6 +318,8 @@ class MetaNotesApp:
         list_container.columnconfigure(0, weight=1)
         self.file_listbox.bind("<Double-Button-1>", self.open_selected_file)
         self.file_listbox.bind("<<ListboxSelect>>", self.on_file_select)
+        self.file_listbox.bind("<Double-Button-2>", self.open_selected_folder)
+        self.file_listbox.bind("<Control-Button-2>", self.open_previous_folder)
 
         # --- Search panel ---
         self.search_frame = ttk.Frame(self.main_frame)
@@ -802,6 +804,21 @@ class MetaNotesApp:
     def save_last_folder(self):
         self.save_config()
 
+    def open_previous_folder(self, event=None):
+        previous_folder = os.path.dirname(self.current_folder)
+        self.set_folder(previous_folder)
+
+    def open_selected_folder(self, event=None):
+        selection = self.file_listbox.curselection()
+        if not selection:
+            return
+        display_name = self.file_listbox.get(selection[0])
+        filename = self.display_to_real_name.get(display_name, display_name)
+        path = os.path.join(self.current_folder, filename)
+        if not os.path.isdir(path):
+            return
+        self.set_folder(path)
+
     def choose_folder(self):
         folder = filedialog.askdirectory(initialdir=self.current_folder)
         if folder:
@@ -812,19 +829,37 @@ class MetaNotesApp:
             messagebox.showerror("Error", f"The directory '{folder}' is invalid.")
             return
         
+        # Temporary creation test to verify that writing is possible
+        try:
+            tmp_path = os.path.join(folder, "tmp_testfile")
+            with open(tmp_path, "w") as f:
+                pass
+            os.remove(tmp_path)
+        except Exception:
+            messagebox.showerror("Error", f"No write permission in '{folder}'.")
+            return
+
         # Close all opened tabs
         for tab_id in reversed(range(len(self.notebook.tabs()))):
             if not self.close_tab(tab_id):  # If Cancel
-                return  # Do no change the folder
-        
+                return  # Do not change the folder
+
         self.current_folder = folder
         self.path_entry.delete(0, 'end')
         self.path_entry.insert(0, self.current_folder)
-        self.load_notes()
+
+        try:
+            self.load_notes()
+        except Exception:
+            messagebox.showerror("Error", "Unable to load notes, reverting to default folder.")
+            self.current_folder = os.path.expanduser("~")
+            self.path_entry.delete(0, 'end')
+            self.path_entry.insert(0, self.current_folder)
+            self.load_notes()
+
         self.populate_file_list()
         self.save_last_folder()
         self.status_label.config(text=f"Directory loaded: {folder}")
-
 
     def validate_path(self, event=None):
         new_path = self.path_entry.get()
@@ -990,6 +1025,7 @@ NOTES BY SIZE:
             }
             
             text_widget.bind("<<Modified>>", lambda e, f=filename: self.on_text_modified(f))
+            text_widget.text.bind("<Control-MouseWheel>", self.on_ctrl_mousewheel_font)
             self.notebook.add(tab_frame, text=filename)
             self.notebook.select(self.notebook.index(tab_frame))
             
@@ -1120,6 +1156,16 @@ NOTES BY SIZE:
             tab_id = self.notebook.index(current_tab)
             self.close_tab(tab_id)
             return "break"
+
+    def on_ctrl_mousewheel_font(self, event):
+        """Increase or decrease font size with Ctrl + MouseWheel"""
+        delta = 1 if event.delta > 0 else -1  # Windows
+        new_size = max(8, min(24, self.font_size + delta))  # Clamp between 8 et 24
+        if new_size != self.font_size:
+            self.font_size = new_size
+            self.font_size_var.set(self.font_size)
+            self.change_font_size()  # Apply the new font size to the tabs and save it in the config file
+        return "break"  # Prevent text scrolling
 
 if __name__ == "__main__":
     root = ttk.Window(title="MetaNotes", themename="superhero")

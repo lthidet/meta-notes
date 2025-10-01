@@ -154,3 +154,23 @@ pyinstaller --onefile --windowed --icon=metanotes.png metanotes.py
 ```
 
 This generates `dist/metanotes` executable.
+
+
+
+## ⌨️ Keyboard Shortcuts
+
+MetaNotes supports several keyboard shortcuts to speed up your workflow. Some shortcuts are global (`bind_all`) and work anywhere, while others require the mouse to be focused on a specific panel or widget.
+
+| Shortcut                         | Action                              | Context / Mouse Focus  |
+| -------------------------------- | ----------------------------------- | ---------------------- |
+| `Ctrl + S`                       | Save the current tab                | Anywhere (global)      |
+| `Ctrl + Z`                       | Undo last change                    | Text editor focused    |
+| `Ctrl + Y` or `Ctrl + Shift + Z` | Redo last undone change             | Text editor focused    |
+| `Ctrl + W`                       | Close the current tab               | Anywhere (global)      |
+| `Ctrl + Shift + F`               | Open the Search panel               | Anywhere (global)      |
+| `F5`                             | Refresh the file list               | Explorer panel focused |
+| `Alt + C`                        | Toggle "Match Case" option          | Search panel focused   |
+| `Alt + W`                        | Toggle "Whole Word" option          | Search panel focused   |
+| `Alt + R`                        | Toggle "Regular Expression" option  | Search panel focused   |
+| `Ctrl + Mouse Wheel`             | Adjust font size in the current tab | Mouse over text editor |
+| `Mouse Wheel click`              | Close the clicked tab immediately   | Mouse over over the tab |
