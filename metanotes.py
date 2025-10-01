@@ -8,6 +8,7 @@ from tkinter import filedialog, messagebox
 from datetime import datetime
 import ctypes
 import re
+import sys
 
 META_FILENAME = ".metanotes.json"
 CONFIG_FILE = "metadata.json"
@@ -154,6 +155,13 @@ def set_hidden(filepath, hidden=True):
             ctypes.windll.kernel32.SetFileAttributesW(str(filepath), attrs | FILE_ATTRIBUTE_HIDDEN)
         else:
             ctypes.windll.kernel32.SetFileAttributesW(str(filepath), attrs & ~FILE_ATTRIBUTE_HIDDEN)
+
+def get_app_folder():
+    # If we're in a PyInstaller bundle
+    if getattr(sys, 'frozen', False):
+        return os.path.dirname(sys.executable)
+    else:
+        return os.path.dirname(os.path.abspath(__file__))
 
 # --- Application ---
 class MetaNotesApp:
@@ -566,22 +574,37 @@ class MetaNotesApp:
     # --- Config ---
     def load_config(self):
         """Load configuration from file and update app variables and widgets."""
-        script_folder = os.path.dirname(os.path.abspath(__file__))
+        script_folder = get_app_folder()
         config_path = os.path.join(script_folder, CONFIG_FILE)
+        
         if os.path.exists(config_path):
             try:
                 with open(config_path, "r", encoding="utf-8") as f:
                     config = json.load(f)
+                    # Charger les valeurs avec des valeurs par défaut
                     self.current_theme = config.get("theme", "superhero")
                     self.auto_save = config.get("auto_save", True)
                     self.word_wrap = config.get("word_wrap", True)
                     self.font_size = config.get("font_size", 11)
                     self.font_family = config.get("font_family", "Consolas")
                     self.search_history = config.get("search_history", [])
+                    
+                    # Charger le dernier dossier si disponible
+                    last_folder = config.get("last_folder")
+                    if last_folder and os.path.isdir(last_folder):
+                        self.current_folder = last_folder
+                        
             except Exception as e:
-                messagebox.showerror("Error", f"Failed to load config: {e}")
+                print(f"Config load error: {e}, using defaults")
+                # Utiliser les valeurs par défaut en cas d'erreur
+                self.current_theme = "superhero"
+                self.auto_save = True
+                self.word_wrap = True
+                self.font_size = 11
+                self.font_family = "Consolas"
+                self.search_history = []
         
-        # Update the Tkinter variable values
+        # Mettre à jour les widgets Tkinter s'ils existent
         if hasattr(self, 'theme_var'):
             self.theme_var.set(self.current_theme)
         if hasattr(self, 'auto_save_var'):
@@ -590,10 +613,13 @@ class MetaNotesApp:
             self.word_wrap_var.set(self.word_wrap)
         if hasattr(self, 'font_size_var'):
             self.font_size_var.set(self.font_size)
-
+        
+        # Appliquer le thème chargé
+        if hasattr(self, 'root'):
+            self.apply_theme(self.current_theme)
 
     def save_config(self):
-        script_folder = os.path.dirname(os.path.abspath(__file__))
+        script_folder = get_app_folder()
         config_path = os.path.join(script_folder, CONFIG_FILE)
         config = {
             "theme": self.current_theme, 
@@ -682,19 +708,22 @@ class MetaNotesApp:
 
     # --- Search Results ---
     def update_search_results(self, event=None):
-        query = self.search_entry.get()
-        if query.strip() == "" or query.strip().lower() == "search...":
+        query = self.search_entry.get().strip()
+        
+        # Gérer le placeholder et les recherches vides
+        if not query or query.lower() == "search...":
             self.search_results.delete(0, 'end')
             self.results_count.config(text="0 results")
             return
 
-        # Update search history
+        # Mettre à jour l'historique de recherche
         if query not in self.search_history and query != "Search...":
             self.search_history.append(query)
             if len(self.search_history) > self.max_search_history:
                 self.search_history.pop(0)
             self.search_entry.config(values=self.search_history)
 
+        # Préparer les résultats
         self.search_results.delete(0, 'end')
         results_count = 0
 
@@ -717,16 +746,25 @@ class MetaNotesApp:
                         self.search_results.insert('end', name)
                         results_count += 1
                     continue
-                except re.error:
-                    pass
+                except re.error as e:
+                    # En cas d'erreur regex, fallback sur la recherche simple
+                    if needle in haystack:
+                        self.search_results.insert('end', name)
+                        results_count += 1
+                    continue
 
             # Whole Word
             if self.match_whole_var.get():
-                # \b pour délimiteurs de mots, re.escape pour éviter que needle soit traité comme regex
-                pattern = r'\b{}\b'.format(re.escape(needle))
-                if re.search(pattern, haystack):
-                    self.search_results.insert('end', name)
-                    results_count += 1
+                try:
+                    pattern = r'\b{}\b'.format(re.escape(needle))
+                    if re.search(pattern, haystack):
+                        self.search_results.insert('end', name)
+                        results_count += 1
+                except re.error:
+                    # Fallback sur la recherche simple en cas d'erreur
+                    if needle in haystack:
+                        self.search_results.insert('end', name)
+                        results_count += 1
             else:
                 # Simple substring
                 if needle in haystack:
@@ -734,8 +772,10 @@ class MetaNotesApp:
                     results_count += 1
 
         self.results_count.config(text=f"{results_count} result(s)")
-
-
+        
+        # Mettre à jour le statut
+        if hasattr(self, 'status_label') and self.current_panel == "search":
+            self.status_label.config(text=f"Search: {results_count} results for '{query}'")
 
     def open_selected_search_result(self, event=None):
         selection = self.search_results.curselection()
@@ -747,7 +787,7 @@ class MetaNotesApp:
 
     # --- Directory ---
     def load_last_folder(self):
-        script_folder = os.path.dirname(os.path.abspath(__file__))
+        script_folder = get_app_folder()
         config_path = os.path.join(script_folder, CONFIG_FILE)
         folder = script_folder
         if os.path.exists(config_path):
@@ -1073,7 +1113,6 @@ NOTES BY SIZE:
             tab_id = self.notebook.index(current_tab)
             self.close_tab(tab_id)
             return "break"
-
 
 if __name__ == "__main__":
     root = ttk.Window(title="MetaNotes", themename="superhero")

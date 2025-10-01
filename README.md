@@ -31,23 +31,6 @@ A **MetaNote** is a piece of information you want to store about a file or folde
 * Tabs for **quick navigation between notes**.
 * Portable — move or share your folder along with `.metanotes.json`.
 
-
-## 💾 Installation
-
-**Option 1: Download prebuilt binaries**
-
-* Go to the [Releases](#) page and download for your OS.
-* Unzip and run the app.
-
-**Option 2: Build from source**
-
-```bash
-git clone https://github.com/yourusername/metanotes.git
-cd metanotes
-# Follow build instructions for your OS
-```
-
-
 ## 🛠 Usage
 
 1. Open MetaNotes and select a **folder**.
@@ -79,3 +62,91 @@ Assets/
 ├─ texture.png
 └─ .metanotes.json   ← contains notes for all items in this folder
 ```
+
+
+## 💾 Installation
+
+**Option 1: Download prebuilt binaries**
+
+* Go to the [Releases](#) page and download for your OS.
+* Unzip and run the app.
+
+**Option 2: Build from source**
+
+```bash
+git clone https://github.com/lthidet/meta-notes.git
+cd meta-notes
+# Follow build instructions for your OS
+```
+
+### Windows
+
+1. Install [Python 3.11+](https://www.python.org/downloads/windows/).
+2. Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+3. Run MetaNotes:
+
+```bash
+python metanotes.py
+```
+
+Optionally, create an **executable** using PyInstaller:
+
+```bash
+pip install pyinstaller
+pyinstaller --onefile --windowed --icon=metanotes.ico metanotes.py
+```
+
+This generates `dist/metanotes.exe`.
+
+### macOS
+
+1. Install [Python 3.11+](https://www.python.org/downloads/macos/).
+2. Install dependencies:
+
+```bash
+pip3 install -r requirements.txt
+```
+
+3. Run MetaNotes:
+
+```bash
+python3 metanotes.py
+```
+
+Optionally, create a macOS app bundle using PyInstaller:
+
+```bash
+pip3 install pyinstaller
+pyinstaller --onefile --windowed --icon=metanotes.icns metanotes.py
+```
+
+This generates `dist/metanotes.app`.
+
+### Linux
+
+1. Install Python 3.11+ (via your package manager, e.g., `sudo apt install python3 python3-pip`).
+2. Install dependencies:
+
+```bash
+pip3 install -r requirements.txt
+```
+
+3. Run MetaNotes:
+
+```bash
+python3 metanotes.py
+```
+
+Optionally, create a standalone executable:
+
+```bash
+pip3 install pyinstaller
+pyinstaller --onefile --windowed --icon=metanotes.png metanotes.py
+```
+
+This generates `dist/metanotes` executable.
