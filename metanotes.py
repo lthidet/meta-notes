@@ -811,6 +811,12 @@ class MetaNotesApp:
         if not os.path.isdir(folder):
             messagebox.showerror("Error", f"The directory '{folder}' is invalid.")
             return
+        
+        # Close all opened tabs
+        for tab_id in reversed(range(len(self.notebook.tabs()))):
+            if not self.close_tab(tab_id):  # If Cancel
+                return  # Do no change the folder
+        
         self.current_folder = folder
         self.path_entry.delete(0, 'end')
         self.path_entry.insert(0, self.current_folder)
@@ -818,6 +824,7 @@ class MetaNotesApp:
         self.populate_file_list()
         self.save_last_folder()
         self.status_label.config(text=f"Directory loaded: {folder}")
+
 
     def validate_path(self, event=None):
         new_path = self.path_entry.get()
@@ -912,8 +919,7 @@ class MetaNotesApp:
             total_words += words
             
         # Display stats
-        stats_text = f"""
-📊 DIRECTORY STATISTICS
+        stats_text = f"""📊 DIRECTORY STATISTICS
 ==========================
 
 Directory: {self.current_folder}
@@ -1048,12 +1054,11 @@ NOTES BY SIZE:
                     f"The file '{filename}' has unsaved changes. Save?"
                 )
                 if response is None:
-                    return
+                    return False  # User has canceled
                 elif response:
                     self.save_tab_content(filename)
             self.notebook.forget(tab_id)
             del self.open_tabs[filename]
-            
             # Update word count for new current tab
             current_tab = self.notebook.select()
             if current_tab:
@@ -1063,6 +1068,8 @@ NOTES BY SIZE:
                         break
             else:
                 self.word_count_label.config(text="Words: 0 | Characters: 0")
+        return True  # Tab successfully closed
+
 
     def save_tab_content(self, filename):
         tab_data = self.open_tabs.get(filename)

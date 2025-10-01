@@ -2,6 +2,8 @@
 
 Keep notes and metadata for your files **without touching the files themselves**. Perfect for artists, developers, data scientists, or anyone who wants a **centralized, portable annotation system**.
 
+![Texte alternatif](metanotes_screenshot.png "Titre de l'image").
+
 ## 🧐 What is a MetaNote?
 
 A **MetaNote** is a piece of information you want to store about a file or folder, **alongside your data but without modifying it**.
@@ -52,6 +54,8 @@ A: Never. MetaNotes **store data externally** in `.metanotes.json`.
 **Q: Can I track notes across nested folders?**
 A: Each folder has its **own `.metanotes.json`**, so notes stay local but portable.
 
+**Q: Does it store user preferences?**
+A: Yes. MetaNotes keeps user preferences in a .metadata.json file in the same directory as the application. It stores settings like font size, theme, auto-save options, and the last directory you opened. When you restart MetaNotes, it automatically reopens that directory. If the directory no longer exists, it defaults to the folder where MetaNotes is located.
 
 ## 📂 Example
 
